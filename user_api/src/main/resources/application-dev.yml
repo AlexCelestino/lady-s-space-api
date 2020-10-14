@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://ec2-52-202-146-43.compute-1.amazonaws.com:5432/ddf1nebvn77hcm
-    username: fyaxzmqcvnvjst
-    password: fdebea2edbfb37434024897ed8923d199b138983eb5ad0708d411ce3b8454c1f
+    url: jdbc:postgresql://ec2-100-25-100-81.compute-1.amazonaws.com:5432/d6ufi5d7n516va
+    username: ypdnbuogzgsvlv
+    password: 57cfd8414884aa69dfdf14ac3c2fcbb2302acb64518a0b5b7f97bb574879301f
     driver-class-name: org.postgresql.Driver
 
     tomcat:

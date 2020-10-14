@@ -18,7 +18,7 @@ class FilterSecurity(
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filter: FilterChain) {
         val token: String? = request.getHeader(HttpHeaders.AUTHORIZATION)
 
-        if (token == null || !token.startsWith("Bearer ")) {
+        if (token == null || !token.startsWith("occurrencesToken ")) {
             this.resolver.resolveException(
                     request,
                     response,

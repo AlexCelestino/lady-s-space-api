@@ -1,0 +1,14 @@
+server:
+  servlet:
+    context-path: /api
+
+spring:
+  profiles:
+    active: dev
+
+  banner:
+    charset: UTF-8
+
+jwt:
+  secret: TGFkeSdzIFNwYWNlIEpTT04gV2ViIFRva2VuIFNlY3JldCBLZXk=
+  expiration: 24

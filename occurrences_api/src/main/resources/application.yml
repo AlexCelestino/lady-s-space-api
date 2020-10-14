@@ -1,0 +1,23 @@
+server:
+  servlet:
+    context-path: /occurrences-api
+  port: 8081
+
+spring:
+  banner:
+    charset: UTF-8
+
+  data:
+    mongodb:
+      uri: mongodb+srv://hdiyc_db:USMTbkX8TfppIAdb@hdiyccluster-9xxtn.azure.mongodb.net/HDIYC_db?retryWrites=true&w=majority
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+  elasticsearch:
+    rest:
+      read-timeout: 60
+
+feign:
+  httpclient:
+    connection-timeout: 10000

@@ -11,7 +11,7 @@ spring:
     basename: error-messages
     encoding: UTF-8
   mvc:
-    locale: en
+    locale: en_US
 
   banner:
     charset: UTF-8

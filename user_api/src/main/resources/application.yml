@@ -5,6 +5,13 @@ server:
 spring:
   profiles:
     active: dev
+  application:
+    name: user_api
+  messages:
+    basename: error-messages
+    encoding: UTF-8
+  mvc:
+    locale: en
 
   banner:
     charset: UTF-8

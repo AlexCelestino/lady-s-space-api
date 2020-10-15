@@ -45,8 +45,6 @@ class ErrorMessage {
 
         const val INCORRECT_LOGIN: String = "login.incorrect.login"
 
-        const val INCORRECT_PASSWORD: String = "login.incorrect.password"
-
         const val INVALID_TOKEN: String = "invalid.token"
     }
 }

@@ -2,7 +2,6 @@ package com.ladys.space.api.services
 
 import com.ladys.space.api.constants.ErrorMessage
 import com.ladys.space.api.constants.ErrorMessage.Keys.INCORRECT_LOGIN
-import com.ladys.space.api.constants.ErrorMessage.Keys.INCORRECT_PASSWORD
 import com.ladys.space.api.errors.exceptions.BadCredentialsException
 import com.ladys.space.api.models.dto.LoginDTO
 import com.ladys.space.api.models.dto.TokenDTO
@@ -54,7 +53,7 @@ class LoginService : UserDetailsService {
         }
 
         return if (isPasswordsEquals(loginDTO.password, userDetails.password))
-            throw BadCredentialsException(errorMessages.getMessage(INCORRECT_PASSWORD, locale))
+            throw BadCredentialsException(errorMessages.getMessage(INCORRECT_LOGIN, locale))
         else
             TokenDTO(token, expireDate)
     }

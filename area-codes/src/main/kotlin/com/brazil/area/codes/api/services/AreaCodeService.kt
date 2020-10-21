@@ -16,4 +16,6 @@ class AreaCodeService {
     fun findByAreaCode(areaCode: String): AreaCodeModel =
             this.areaCodeRepository.findByAreaCode(areaCode) ?: throw ResourceNotFoundException(AREA_CODE_NOT_FOUND)
 
+    fun findAll(): List<AreaCodeModel> = this.areaCodeRepository.findAll().toList()
+
 }

@@ -4,6 +4,7 @@ import com.brazil.area.codes.api.models.AreaCodeModel
 import com.brazil.area.codes.api.services.AreaCodeService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
+import org.springframework.http.ResponseEntity.ok
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -18,6 +19,9 @@ class AreaCodeController {
 
     @GetMapping("{areaCode}")
     fun getByAreaCode(@PathVariable("areaCode") areaCode: String): ResponseEntity<AreaCodeModel> =
-            ResponseEntity.ok(this.areaCodeService.findByAreaCode(areaCode))
+            ok(this.areaCodeService.findByAreaCode(areaCode))
 
+    @GetMapping
+    fun getAll(): ResponseEntity<List<AreaCodeModel>> = ok(this.areaCodeService.findAll())
+    
 }

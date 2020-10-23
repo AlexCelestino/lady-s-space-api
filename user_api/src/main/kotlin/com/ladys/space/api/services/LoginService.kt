@@ -3,6 +3,7 @@ package com.ladys.space.api.services
 import com.ladys.space.api.constants.ErrorMessage
 import com.ladys.space.api.constants.ErrorMessage.Keys.INCORRECT_LOGIN
 import com.ladys.space.api.errors.exceptions.BadCredentialsException
+import com.ladys.space.api.models.UserModel
 import com.ladys.space.api.models.dto.LoginDTO
 import com.ladys.space.api.models.dto.TokenDTO
 import com.ladys.space.api.repositories.UserRepository
@@ -41,6 +42,8 @@ class LoginService : UserDetailsService {
                     ?: throw BadCredentialsException(errorMessages.getMessage(INCORRECT_LOGIN, locale))
         }
 
+        val user: UserModel = this.userRepository.findByEmail(loginDTO.email)!!
+
         val token: String by lazy { this.jwtService.generateToken(loginDTO.email) }
 
         val expireDate: String by lazy {
@@ -55,7 +58,7 @@ class LoginService : UserDetailsService {
         return if (isPasswordsEquals(loginDTO.password, userDetails.password))
             throw BadCredentialsException(errorMessages.getMessage(INCORRECT_LOGIN, locale))
         else
-            TokenDTO(token, expireDate)
+            TokenDTO(user.name, user.lastName, user.email, user.address!!.address, token, expireDate)
     }
 
     override fun loadUserByUsername(email: String): UserDetails? =

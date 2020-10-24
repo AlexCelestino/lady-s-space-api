@@ -1,78 +1,94 @@
 package com.ladys.space.occurrences.services
 
-import com.ladys.space.occurrences.models.OccurrencesDTO
+import com.ladys.space.occurrences.errors.exceptions.InvalidAccessException
 import com.ladys.space.occurrences.models.RankingModel
+import com.ladys.space.occurrences.models.dto.OccurrencesDTO
 import com.ladys.space.occurrences.models.dto.RankingDTO
 import com.ladys.space.occurrences.repositories.CurrentYearOccurrencesRepository
 import com.ladys.space.occurrences.repositories.LastYearOccurrencesRepository
+import com.ladys.space.occurrences.services.ErrorMessageService.Keys.MISSING_AUTHORIZATION_HEADER
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.time.LocalDate
+import java.util.stream.Collectors
 
 @Service
 class OccurrencesService {
 
     @Autowired
-    private lateinit var currentYearOccurrencesRepository: CurrentYearOccurrencesRepository
+    private lateinit var currentOccurrencesRepository: CurrentYearOccurrencesRepository
 
     @Autowired
-    private lateinit var lastYearOccurrencesRepository: LastYearOccurrencesRepository
+    private lateinit var lastOccurrencesRepository: LastYearOccurrencesRepository
 
-    private val validationTokenService: ValidationTokenService = ValidationTokenService()
+    @Autowired
+    private lateinit var errorMessageService: ErrorMessageService
+
+    private val validationTokenHelper: ValidationTokenHelper by lazy {
+        ValidationTokenHelper(this.errorMessageService)
+    }
 
     private val currentYear: Int = LocalDate.now().year
 
     private val lastYear: Int = currentYear - 1
 
-    fun getOccurrences(year: Int, token: String): MutableList<OccurrencesDTO>? {
-        val sort: Sort = Sort.by(Sort.Direction.ASC, "delegacia")
+    private val sortedByPoliceStation: Sort = Sort.by(Sort.Direction.ASC, "policeStation")
 
-        val occurrencesDTO: MutableList<OccurrencesDTO> = mutableListOf()
+    private val sortedByTotal: Sort = Sort.by(Sort.Direction.DESC, "records.total")
 
-        this.validationTokenService.validateToken(token)
+    fun getOccurrences(year: Int, region: String?, token: String?): List<OccurrencesDTO>? {
+        token?.let {
+            this.validationTokenHelper.validateToken(it)
+        }?: throw InvalidAccessException(this.errorMessageService.getMessage(MISSING_AUTHORIZATION_HEADER))
 
-        return when (year) {
-            this.currentYear -> {
-                this.currentYearOccurrencesRepository.findAll(sort).forEach {
-                    occurrencesDTO.add(OccurrencesDTO(it.delegacia, it.regiao, it.registros))
-                }
-                occurrencesDTO
+        if (region != null)
+            return when (year) {
+                this.currentYear -> this.currentOccurrencesRepository.findByRegionOrderByPoliceStationAsc(
+                        region, this.sortedByPoliceStation
+                )?.let { listOf(OccurrencesDTO(it.policeStation, it.region, it.records)) }
+
+                this.lastYear -> this.lastOccurrencesRepository.findByRegionOrderByPoliceStationAsc(
+                        region, this.sortedByPoliceStation
+                )?.let { listOf(OccurrencesDTO(it.policeStation, it.region, it.records)) }
+
+                else -> null
             }
+        else
+            return when (year) {
+                this.currentYear -> this.currentOccurrencesRepository.findAll(this.sortedByPoliceStation).stream()
+                        .map { OccurrencesDTO(it.policeStation, it.region, it.records) }.collect(Collectors.toList())
 
-            this.lastYear -> {
-                this.lastYearOccurrencesRepository.findAll(sort).forEach {
-                    occurrencesDTO.add(OccurrencesDTO(it.delegacia, it.regiao, it.registros))
-                }
-                occurrencesDTO
+                this.lastYear -> this.lastOccurrencesRepository.findAll(this.sortedByPoliceStation).stream()
+                        .map { OccurrencesDTO(it.policeStation, it.region, it.records) }.collect(Collectors.toList())
+
+                else -> null
             }
-
-            else -> null
-        }
     }
 
-    fun getTopFive(year: Int, token: String): RankingDTO? {
-        val rankingList: MutableList<RankingModel> = ArrayList(5)
+    fun getTopFive(year: Int, token: String?): RankingDTO? {
+        token?.let {
+            this.validationTokenHelper.validateToken(it)
+        }?: throw InvalidAccessException(this.errorMessageService.getMessage(MISSING_AUTHORIZATION_HEADER))
 
-        val sort: Sort = Sort.by(Sort.Direction.DESC, "registros.total")
+        val rankingList: MutableList<RankingModel> = ArrayList(5)
 
         val ranking: RankingDTO by lazy {
             RankingDTO(rankingList[0], rankingList[1], rankingList[2], rankingList[3], rankingList[4])
         }
-		
-		this.validationTokenService.validateToken(token)
-		
+
+
         return when (year) {
             this.currentYear -> {
-                this.currentYearOccurrencesRepository.findAll(sort).forEach {
-                    rankingList.add(RankingModel(it.delegacia.split("-")[1].trim(), it.registros.total))
+                this.currentOccurrencesRepository.findAll(this.sortedByTotal).forEach {
+                    rankingList.add(RankingModel(it.region, it.records.total))
                 }
                 ranking
             }
 
             this.lastYear -> {
-                this.lastYearOccurrencesRepository.findAll(sort).forEach {
-                    rankingList.add(RankingModel(it.delegacia.split("-")[1].trim(), it.registros.total))
+                this.lastOccurrencesRepository.findAll(this.sortedByTotal).forEach {
+                    rankingList.add(RankingModel(it.region, it.records.total))
                 }
                 ranking
             }

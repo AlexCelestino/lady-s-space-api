@@ -1,5 +1,6 @@
-package com.ladys.space.occurrences.models
+package com.ladys.space.occurrences.models.dto
 
+import com.ladys.space.occurrences.models.RecordsModel
 import java.io.Serializable
 
 data class OccurrencesDTO(

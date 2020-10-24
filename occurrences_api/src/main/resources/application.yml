@@ -1,6 +1,6 @@
 server:
   servlet:
-    context-path: /occurrences-api
+    context-path: /api
   port: 8081
 
 spring:
@@ -9,7 +9,7 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb+srv://hdiyc_db:USMTbkX8TfppIAdb@hdiyccluster-9xxtn.azure.mongodb.net/HDIYC_db?retryWrites=true&w=majority
+      uri: mongodb+srv://admin:A3zm5byaTvBiXm3@cluster0.koqbg.mongodb.net/ladys_db?retryWrites=true&w=majority
 
   jpa:
     hibernate:
@@ -17,7 +17,3 @@ spring:
   elasticsearch:
     rest:
       read-timeout: 60
-
-feign:
-  httpclient:
-    connection-timeout: 10000

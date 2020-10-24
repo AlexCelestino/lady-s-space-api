@@ -1,8 +1,9 @@
 package com.ladys.space.occurrences.services
 
 import com.ladys.space.occurrences.constants.ApiConstants.Url.USER_API
-import com.ladys.space.occurrences.constants.ErrorMessageConstants.Companion.INVALID_TOKEN
-import com.ladys.space.occurrences.constants.ErrorMessageConstants.Companion.USER_UNAUTHORIZED
+import com.ladys.space.occurrences.services.ErrorMessageService.Keys.CONNECTION_ERROR
+import com.ladys.space.occurrences.services.ErrorMessageService.Keys.INVALID_TOKEN
+import com.ladys.space.occurrences.services.ErrorMessageService.Keys.USER_UNAUTHORIZED
 import com.ladys.space.occurrences.errors.exceptions.ClientErrorException
 import com.ladys.space.occurrences.errors.exceptions.InvalidAccessException
 import org.springframework.http.HttpEntity
@@ -15,7 +16,7 @@ import org.springframework.web.client.RestTemplate
 import java.net.ConnectException
 import java.net.URI
 
-class ValidationTokenService {
+class ValidationTokenHelper(private val errorMessageService: ErrorMessageService) {
 
     private val restTemplate: RestTemplate = RestTemplate()
 
@@ -31,13 +32,12 @@ class ValidationTokenService {
         try {
             this.restTemplate.exchange(uri, GET, requestEntity, String::class.java)
         } catch (e: ConnectException) {
-            throw ConnectException(e.message!!)
+            throw ConnectException(this.errorMessageService.getMessage(CONNECTION_ERROR))
         } catch (e: Unauthorized) {
-            throw ClientErrorException(USER_UNAUTHORIZED)
+            throw ClientErrorException(this.errorMessageService.getMessage(USER_UNAUTHORIZED))
         } catch (e: Forbidden) {
-            throw InvalidAccessException(INVALID_TOKEN)
+            throw InvalidAccessException(this.errorMessageService.getMessage(INVALID_TOKEN))
         }
-
     }
 
 }

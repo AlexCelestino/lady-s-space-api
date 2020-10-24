@@ -1,13 +1,11 @@
-package com.ladys.space.api.security
+package com.ladys.space.api.security.filter
 
 import com.ladys.space.api.constants.ErrorMessage
 import com.ladys.space.api.constants.ErrorMessage.Keys.INVALID_TOKEN
 import com.ladys.space.api.constants.ErrorMessage.Keys.USER_NOT_FOUND
 import com.ladys.space.api.errors.exceptions.InvalidTokenException
-import com.ladys.space.api.services.JwtService
-import com.ladys.space.api.services.LoginService
-import io.jsonwebtoken.ExpiredJwtException
-import io.jsonwebtoken.SignatureException
+import com.ladys.space.api.security.JwtSecurity
+import com.ladys.space.api.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders.AUTHORIZATION
@@ -18,15 +16,14 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 import org.springframework.web.servlet.HandlerExceptionResolver
-import java.util.*
 import javax.servlet.FilterChain
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 @Component
-class RequestFilterSecurity(
-        private val loginService: LoginService,
-        private val jwtService: JwtService,
+class RequestFilter(
+        private val userService: UserService,
+        private val jwtSecurity: JwtSecurity,
         @Qualifier("handlerExceptionResolver")
         private val resolver: HandlerExceptionResolver
 ) : OncePerRequestFilter() {
@@ -35,51 +32,39 @@ class RequestFilterSecurity(
     private lateinit var errorMessages: ErrorMessage
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filter: FilterChain) {
-        val locale: Locale = request.locale
-        val authorization: String? = request.getHeader(AUTHORIZATION)
-
         try {
+            val authorization: String? = request.getHeader(AUTHORIZATION)
             if (authorization != null && authorization.startsWith("Bearer ")) {
                 val token: String = authorization.split(" ")[1]
-                val userLogin: String by lazy { this.jwtService.getLogin(token) }
+                val userLogin: String by lazy { this.jwtSecurity.getLogin(token) }
 
-                if (this.jwtService.isTokenValid(token)) {
-                    val details: UserDetails? = this.loginService.loadUserByUsername(userLogin)
+                if (this.jwtSecurity.isTokenValid(token)) {
+                    val details: UserDetails? = this.userService.loadUserByUsername(userLogin)
 
                     if (details == null) {
                         this.resolver.resolveException(
                                 request,
                                 response,
                                 null,
-                                UsernameNotFoundException(this.errorMessages.getMessage(USER_NOT_FOUND, locale))
+                                UsernameNotFoundException(this.errorMessages.getMessage(USER_NOT_FOUND))
                         )
                         return
                     }
 
-                    val authenticationToken =
-                            UsernamePasswordAuthenticationToken(details, null, details.authorities)
-
-                    SecurityContextHolder.getContext().authentication = authenticationToken
+                    UsernamePasswordAuthenticationToken(details, null, details.authorities).also {
+                        SecurityContextHolder.getContext().authentication = it
+                    }
                 }
             }
-        } catch (e: ExpiredJwtException) {
+        } catch (e: Exception) {
             this.resolver.resolveException(
                     request,
                     response,
                     null,
-                    InvalidTokenException(this.errorMessages.getMessage(INVALID_TOKEN, locale))
-            )
-            return
-        } catch (e: SignatureException) {
-            this.resolver.resolveException(
-                    request,
-                    response,
-                    null,
-                    InvalidTokenException(this.errorMessages.getMessage(INVALID_TOKEN, locale))
+                    InvalidTokenException(this.errorMessages.getMessage(INVALID_TOKEN))
             )
             return
         }
-
         filter.doFilter(request, response)
     }
 }

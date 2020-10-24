@@ -1,5 +1,6 @@
 package com.ladys.space.api.models
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.io.Serializable
 import javax.persistence.*
@@ -7,6 +8,7 @@ import javax.persistence.GenerationType.IDENTITY
 
 @Entity
 @Table(name = "tb_address")
+@JsonIgnoreProperties(value = ["user", "address_id"])
 data class AddressModel(
 
         @Id
@@ -16,19 +18,19 @@ data class AddressModel(
         val id: Int? = null,
 
         @Column(length = 8, nullable = false)
-        val zipCode: String,
+        var zipCode: String,
 
         @Column(length = 50, nullable = false)
-        val address: String,
+        var address: String,
 
         @Column(length = 50, nullable = false)
-        val neighbourhood: String,
+        var neighbourhood: String,
 
         @Column(length = 50, nullable = false)
-        val city: String,
+        var city: String,
 
         @Column(length = 50, nullable = false)
-        val state: String,
+        var state: String,
 
         @OneToOne(mappedBy = "address")
         var user: UserModel? = null

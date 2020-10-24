@@ -3,7 +3,6 @@ package com.ladys.space.api.config
 import org.springframework.context.MessageSource
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer
 import org.springframework.context.support.ReloadableResourceBundleMessageSource
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
@@ -16,7 +15,7 @@ import java.util.*
 class ErrorMessagesConfig : WebMvcConfigurer {
 
     /**
-     * Configure basename and encoding to error-messages.properties.
+     * Configure basename and encoding to error-messages_pt.properties.
      * @return MessageSource
      * */
     @Bean
@@ -26,7 +25,7 @@ class ErrorMessagesConfig : WebMvcConfigurer {
     }
 
     /**
-     * Makes the values of error-messages.properties available.
+     * Makes the values of error-messages_pt.properties available.
      * @return LocalValidatorFactoryBean
      * */
     @Bean
@@ -57,14 +56,6 @@ class ErrorMessagesConfig : WebMvcConfigurer {
      * */
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(localeInterceptor())
-    }
-
-    /**
-     * Changes de prefix.
-     * */
-    @Bean
-    fun propertyConfigurer() = PropertySourcesPlaceholderConfigurer().apply {
-        setPlaceholderPrefix("%{")
     }
 
 }

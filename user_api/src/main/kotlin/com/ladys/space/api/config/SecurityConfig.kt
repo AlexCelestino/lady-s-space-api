@@ -1,8 +1,8 @@
 package com.ladys.space.api.config
 
-import com.ladys.space.api.security.RequestFilterSecurity
-import com.ladys.space.api.services.JwtService
-import com.ladys.space.api.services.LoginService
+import com.ladys.space.api.security.JwtSecurity
+import com.ladys.space.api.security.filter.RequestFilter
+import com.ladys.space.api.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
@@ -24,10 +24,10 @@ import org.springframework.web.servlet.HandlerExceptionResolver
 class SecurityConfig : WebSecurityConfigurerAdapter() {
 
     @Autowired
-    private lateinit var loginService: LoginService
+    private lateinit var userService: UserService
 
     @Autowired
-    private lateinit var jwtService: JwtService
+    private lateinit var jwtSecurity: JwtSecurity
 
     @Autowired
     @Qualifier("handlerExceptionResolver")
@@ -37,23 +37,22 @@ class SecurityConfig : WebSecurityConfigurerAdapter() {
     fun passwordEncoder(): BCryptPasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    fun requestFilter(): OncePerRequestFilter =
-            RequestFilterSecurity(this.loginService, this.jwtService, this.resolver)
+    fun requestFilter(): OncePerRequestFilter = RequestFilter(this.userService, this.jwtSecurity, this.resolver)
 
     override fun configure(auth: AuthenticationManagerBuilder) {
-        auth.userDetailsService(this.loginService).passwordEncoder(this.passwordEncoder())
+        auth.userDetailsService(this.userService).passwordEncoder(this.passwordEncoder())
     }
 
-    override fun configure(http: HttpSecurity): Unit =
-            with(http) {
-                this.csrf().disable()
-                        .authorizeRequests()
-                        .antMatchers(POST, "/register", "/login", "/validate/**").permitAll()
+    override fun configure(http: HttpSecurity): Unit = with(http) {
+        this.csrf().disable()
+                .authorizeRequests()
+                .antMatchers(POST, "/user/**", "/validate/**").permitAll()
+                .anyRequest().authenticated()
 
-                this.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        this.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 
-                this.addFilterBefore(requestFilter(), UsernamePasswordAuthenticationFilter::class.java)
-            }
+        this.addFilterBefore(requestFilter(), UsernamePasswordAuthenticationFilter::class.java)
+    }
 
     override fun configure(web: WebSecurity) {
         web.ignoring().antMatchers("/h2-console/**")

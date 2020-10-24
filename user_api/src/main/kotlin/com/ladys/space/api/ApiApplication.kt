@@ -6,7 +6,7 @@ import org.springframework.context.annotation.PropertySource
 import org.springframework.context.annotation.PropertySources
 
 @PropertySources(
-        PropertySource("classpath:error-messages.properties"),
+        PropertySource("classpath:error-messages_pt.properties"),
         PropertySource("classpath:error-messages_en.properties")
 )
 @SpringBootApplication

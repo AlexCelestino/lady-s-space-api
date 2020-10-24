@@ -2,7 +2,7 @@ package com.ladys.space.api.models.dto
 
 import java.io.Serializable
 
-data class TokenDTO(
+data class AuthenticatedUserDTO(
         val name: String,
         val lastName: String,
         val email: String,

@@ -1,4 +1,4 @@
-package com.ladys.space.api.services
+package com.ladys.space.api.security
 
 import com.ladys.space.api.constants.ErrorMessage
 import com.ladys.space.api.constants.ErrorMessage.Keys.INVALID_TOKEN
@@ -6,7 +6,6 @@ import com.ladys.space.api.errors.exceptions.InvalidTokenException
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
-import io.jsonwebtoken.SignatureException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -15,12 +14,12 @@ import java.time.ZoneId
 import java.util.*
 
 @Service
-class JwtService {
+class JwtSecurity {
 
-    @Value("%{jwt.secret}")
+    @Value("\${jwt.secret}")
     private lateinit var secretKey: String
 
-    @Value("%{jwt.expiration}")
+    @Value("\${jwt.expiration}")
     private lateinit var expiration: String
 
     @Autowired
@@ -32,8 +31,8 @@ class JwtService {
             .signWith(SignatureAlgorithm.HS512, this.secretKey)
             .compact()
 
-    fun isTokenValid(token: String, locale: Locale? = null): Boolean {
-        val claims: Claims = this.getClaims(token, locale)
+    fun isTokenValid(token: String): Boolean {
+        val claims: Claims = this.getClaims(token)
         val expirationDate: Date = claims.expiration
 
         val expirationDateTime: LocalDateTime =
@@ -50,14 +49,14 @@ class JwtService {
     fun expireDate(): Date = Date
             .from(LocalDateTime.now().plusHours(this.expiration.toLong()).atZone(ZoneId.systemDefault()).toInstant())
 
-    private fun getClaims(token: String, locale: Locale? = null): Claims =
+    private fun getClaims(token: String): Claims =
             try {
                 Jwts.parser()
                         .setSigningKey(this.secretKey)
                         .parseClaimsJws(token)
                         .body
-            } catch (e: SignatureException) {
-                throw InvalidTokenException(this.errorMessage.getMessage(INVALID_TOKEN, locale!!))
+            } catch (e: Exception) {
+                throw InvalidTokenException(this.errorMessage.getMessage(INVALID_TOKEN))
             }
 
 }

@@ -5,16 +5,10 @@ server:
 spring:
   profiles:
     active: dev
-  application:
-    name: user_api
-  messages:
-    basename: error-messages
-    encoding: UTF-8
-  mvc:
-    locale: en_US
-
   banner:
     charset: UTF-8
+  main:
+    allow-bean-definition-overriding: true
 
 jwt:
   secret: TGFkeSdzIFNwYWNlIEpTT04gV2ViIFRva2VuIFNlY3JldCBLZXk=

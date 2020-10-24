@@ -14,7 +14,7 @@ import javax.persistence.GenerationType.IDENTITY
 
 @Entity
 @JsonInclude(NON_NULL)
-@JsonIgnoreProperties(value = ["address", "contact", "emergencyContacts", "dependent"])
+@JsonIgnoreProperties(value = ["user_id"])
 @Table(name = "tb_user", uniqueConstraints = [UniqueConstraint(name = "c_email", columnNames = ["email"])])
 data class UserModel(
 
@@ -22,35 +22,27 @@ data class UserModel(
         @Column(name = "user_id")
         @JsonProperty(value = "user_id")
         @GeneratedValue(strategy = IDENTITY)
-        val id: Int? = null,
+        var id: Int? = null,
 
         @Column(length = 20, nullable = false)
-        val name: String,
+        var name: String,
 
         @Column(length = 30, nullable = false)
-        val lastName: String,
+        var lastName: String,
 
         @NaturalId(mutable = false)
         @Column(length = 70, nullable = false)
-        val email: String,
+        var email: String,
 
         @Column(nullable = false)
         @JsonFormat(shape = STRING, pattern = "yyyy-MM-dd")
-        val birthDate: LocalDate,
+        var birthDate: LocalDate,
 
         @Column(length = 1, nullable = false)
-        val gender: Char,
+        var gender: Char,
 
         @Column(length = 150, nullable = false)
-        val password: String,
-
-        @OneToOne
-        @JoinColumn(
-                name = "contact_contact_id",
-                referencedColumnName = "contact_id",
-                foreignKey = ForeignKey(name = "c_contact_id")
-        )
-        var contact: ContactModel? = null,
+        var password: String,
 
         @OneToOne
         @JoinColumn(
@@ -58,9 +50,5 @@ data class UserModel(
                 referencedColumnName = "address_id",
                 foreignKey = ForeignKey(name = "c_address_id")
         )
-        var address: AddressModel? = null,
-
-        @OneToMany(mappedBy = "user")
-        val emergencyContacts: List<EmergencyContactModel>? = null
-
+        var address: AddressModel? = null
 ) : Serializable

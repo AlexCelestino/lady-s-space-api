@@ -1,12 +1,12 @@
-package com.ladys.space.api.constants
+package com.ladys.space.api.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 
-@Component
-class ErrorMessage {
+@Service
+class ErrorMessageService {
 
     @Autowired
     private lateinit var messageSource: MessageSource

@@ -1,9 +1,8 @@
 package com.ladys.space.api.services
 
-import com.ladys.space.api.constants.ErrorMessage
-import com.ladys.space.api.constants.ErrorMessage.Keys.EQUAL_PASSWORDS
-import com.ladys.space.api.constants.ErrorMessage.Keys.INCORRECT_LOGIN
-import com.ladys.space.api.constants.ErrorMessage.Keys.USER_NOT_FOUND
+import com.ladys.space.api.services.ErrorMessageService.Keys.EQUAL_PASSWORDS
+import com.ladys.space.api.services.ErrorMessageService.Keys.INCORRECT_LOGIN
+import com.ladys.space.api.services.ErrorMessageService.Keys.USER_NOT_FOUND
 import com.ladys.space.api.errors.exceptions.BadCredentialsException
 import com.ladys.space.api.errors.exceptions.BadValueException
 import com.ladys.space.api.errors.exceptions.UserNotFoundException
@@ -22,7 +21,6 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 import java.time.ZoneId
 
 @Service
@@ -38,34 +36,31 @@ class UserService : UserDetailsService {
     private lateinit var encoder: BCryptPasswordEncoder
 
     @Autowired
-    private lateinit var errorMessages: ErrorMessage
+    private lateinit var errorMessagesService: ErrorMessageService
 
     @Autowired
     private lateinit var jwtSecurity: JwtSecurity
 
-    private val validationHelper: ValidationHelper by lazy {
-        ValidationHelper(this.userRepository, this.errorMessages, this.encoder)
+    private val helper: ValidationHelper by lazy {
+        ValidationHelper(this.userRepository, this.errorMessagesService, this.encoder, this.jwtSecurity)
     }
 
     fun authenticateUser(loginDTO: LoginDTO): AuthenticatedUserDTO {
         val userDetails: UserDetails = loadUserByUsername(loginDTO.email)
-                ?: throw BadCredentialsException(errorMessages.getMessage(INCORRECT_LOGIN))
+                ?: throw BadCredentialsException(errorMessagesService.getMessage(INCORRECT_LOGIN))
 
         val user: UserModel = this.userRepository.findByEmail(loginDTO.email)!!
 
         val token: String by lazy { this.jwtSecurity.generateToken(loginDTO.email) }
 
         val expireDate: String by lazy {
-            val date: LocalDateTime = this.jwtSecurity.expireDate()
-                    .toInstant()
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDateTime()
-
-            toBase64(date.toString())
+            this.jwtSecurity.expireDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime().run {
+                toBase64(this.toString())
+            }
         }
 
-        return if (!this.validationHelper.isPasswordsEquals(loginDTO.password, userDetails.password))
-            throw BadCredentialsException(errorMessages.getMessage(INCORRECT_LOGIN))
+        return if (!this.helper.isPasswordsEquals(loginDTO.password, userDetails.password))
+            throw BadCredentialsException(errorMessagesService.getMessage(INCORRECT_LOGIN))
         else
             with(user) {
                 AuthenticatedUserDTO(this.name, this.lastName, this.email, this.address!!.address, token, expireDate)
@@ -73,11 +68,7 @@ class UserService : UserDetailsService {
     }
 
     override fun loadUserByUsername(email: String): UserDetails? = this.userRepository.findByEmail(email)?.let {
-        User.builder()
-                .username(it.email)
-                .password(it.password)
-                .roles("")
-                .build()
+        User.builder().username(it.email).password(it.password).roles("").build()
     }
 
     @Transactional
@@ -86,8 +77,8 @@ class UserService : UserDetailsService {
                 null,
                 this.name,
                 this.lastName,
-                validationHelper.verifyDuplicity(this.email),
-                validationHelper.validateMinimumAge(this.birthDate),
+                helper.verifyDuplicity(this.email),
+                helper.validateMinimumAge(this.birthDate),
                 this.gender[0],
                 encoder.encode(this.password),
                 null
@@ -104,17 +95,12 @@ class UserService : UserDetailsService {
         )
 
         userRepository.save(user)
-        addressRepository.save(address).also {
-            user.apply { this.address = it }.also { userRepository.save(it) }
-        }
+
+        addressRepository.save(address).also { user.apply { this.address = it }.also { userRepository.save(it) } }
     }
 
-    fun getUser(rawToken: String): UserModel {
-        val token: String = rawToken.split(" ")[1]
-        this.jwtSecurity.getLogin(token).also {
-            return this.userRepository.findByEmail(it)
-                    ?: throw BadValueException(this.errorMessages.getMessage(USER_NOT_FOUND))
-        }
+    fun getUser(rawToken: String): UserModel = this.helper.getLoginFromToken(rawToken).run {
+        userRepository.findByEmail(this) ?: throw BadValueException(errorMessagesService.getMessage(USER_NOT_FOUND))
     }
 
     @Transactional
@@ -133,18 +119,17 @@ class UserService : UserDetailsService {
                 this@apply.address?.state = this.address
             }
         }
-        return this.userRepository.save(it)
+        this.userRepository.save(it)
     } ?: throw  UserNotFoundException(USER_NOT_FOUND)
 
     @Transactional
     fun updatePassword(rawToken: String, passwordDTO: PasswordDTO) {
-        val token: String = rawToken.split(" ")[1]
-        val login: String = this.jwtSecurity.getLogin(token)
-        val user: UserModel = this.userRepository.findByEmail(login)
-                ?: throw BadValueException(this.errorMessages.getMessage(USER_NOT_FOUND))
+        val user: UserModel = this.helper.getLoginFromToken(rawToken).run {
+            userRepository.findByEmail(this) ?: throw BadValueException(errorMessagesService.getMessage(USER_NOT_FOUND))
+        }
 
-        if (this.validationHelper.isPasswordsEquals(passwordDTO.password, user.password))
-            throw BadValueException(this.errorMessages.getMessage(EQUAL_PASSWORDS))
+        if (this.helper.isPasswordsEquals(passwordDTO.password, user.password))
+            throw BadValueException(this.errorMessagesService.getMessage(EQUAL_PASSWORDS))
 
         user.apply { user.password = encoder.encode(passwordDTO.password) }.also { this.userRepository.save(it) }
     }

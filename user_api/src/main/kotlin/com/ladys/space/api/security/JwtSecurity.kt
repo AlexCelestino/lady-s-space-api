@@ -1,7 +1,7 @@
 package com.ladys.space.api.security
 
-import com.ladys.space.api.constants.ErrorMessage
-import com.ladys.space.api.constants.ErrorMessage.Keys.INVALID_TOKEN
+import com.ladys.space.api.services.ErrorMessageService
+import com.ladys.space.api.services.ErrorMessageService.Keys.INVALID_TOKEN
 import com.ladys.space.api.errors.exceptions.InvalidTokenException
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
@@ -23,7 +23,7 @@ class JwtSecurity {
     private lateinit var expiration: String
 
     @Autowired
-    private lateinit var errorMessage: ErrorMessage
+    private lateinit var errorMessageService: ErrorMessageService
 
     fun generateToken(email: String): String = Jwts.builder()
             .setSubject(email)
@@ -56,7 +56,7 @@ class JwtSecurity {
                         .parseClaimsJws(token)
                         .body
             } catch (e: Exception) {
-                throw InvalidTokenException(this.errorMessage.getMessage(INVALID_TOKEN))
+                throw InvalidTokenException(this.errorMessageService.getMessage(INVALID_TOKEN))
             }
 
 }

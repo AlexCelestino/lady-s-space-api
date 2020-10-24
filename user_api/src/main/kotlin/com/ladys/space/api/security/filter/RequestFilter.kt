@@ -1,8 +1,10 @@
 package com.ladys.space.api.security.filter
 
-import com.ladys.space.api.constants.ErrorMessage
-import com.ladys.space.api.constants.ErrorMessage.Keys.INVALID_TOKEN
-import com.ladys.space.api.constants.ErrorMessage.Keys.USER_NOT_FOUND
+import com.ladys.space.api.constants.ApiConstants.Headers.OCCURRENCES_HEADER
+import com.ladys.space.api.constants.ApiConstants.Headers.TOKEN
+import com.ladys.space.api.services.ErrorMessageService
+import com.ladys.space.api.services.ErrorMessageService.Keys.INVALID_TOKEN
+import com.ladys.space.api.services.ErrorMessageService.Keys.USER_NOT_FOUND
 import com.ladys.space.api.errors.exceptions.InvalidTokenException
 import com.ladys.space.api.security.JwtSecurity
 import com.ladys.space.api.services.UserService
@@ -29,12 +31,14 @@ class RequestFilter(
 ) : OncePerRequestFilter() {
 
     @Autowired
-    private lateinit var errorMessages: ErrorMessage
+    private lateinit var errorMessagesService: ErrorMessageService
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filter: FilterChain) {
         try {
             val authorization: String? = request.getHeader(AUTHORIZATION)
-            if (authorization != null && authorization.startsWith("Bearer ")) {
+            if (authorization != null && authorization.startsWith(TOKEN) ||
+                    authorization != null && authorization.startsWith(OCCURRENCES_HEADER)) {
+
                 val token: String = authorization.split(" ")[1]
                 val userLogin: String by lazy { this.jwtSecurity.getLogin(token) }
 
@@ -46,7 +50,7 @@ class RequestFilter(
                                 request,
                                 response,
                                 null,
-                                UsernameNotFoundException(this.errorMessages.getMessage(USER_NOT_FOUND))
+                                UsernameNotFoundException(this.errorMessagesService.getMessage(USER_NOT_FOUND))
                         )
                         return
                     }
@@ -61,7 +65,7 @@ class RequestFilter(
                     request,
                     response,
                     null,
-                    InvalidTokenException(this.errorMessages.getMessage(INVALID_TOKEN))
+                    InvalidTokenException(this.errorMessagesService.getMessage(INVALID_TOKEN))
             )
             return
         }

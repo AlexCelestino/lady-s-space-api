@@ -1,6 +1,5 @@
 package com.ladys.space.api.controllers
 
-import com.ladys.space.api.models.UserModel
 import com.ladys.space.api.models.dto.*
 import com.ladys.space.api.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,7 +20,7 @@ class UserController {
     private lateinit var userService: UserService
 
     @GetMapping
-    fun getUser(@RequestHeader(name = AUTHORIZATION, required = true) token: String): ResponseEntity<UserModel> =
+    fun getUser(@RequestHeader(name = AUTHORIZATION, required = true) token: String): ResponseEntity<ProfileDTO> =
             ok(this.userService.getUser(token))
 
     @PostMapping("/login")
@@ -35,8 +34,11 @@ class UserController {
     }
 
     @PutMapping("/update")
-    fun updateUser(@Valid @RequestBody profileDTO: ProfileDTO): ResponseEntity<UserModel> {
-        return ok(this.userService.updateUser(profileDTO))
+    fun updateUser(
+            @Valid @RequestBody profileDTO: ProfileDTO,
+            @RequestHeader(name = AUTHORIZATION, required = true) token: String
+    ): ResponseEntity<ProfileDTO> {
+        return ok(this.userService.updateUser(profileDTO, token))
     }
 
     @PatchMapping("/change-password")

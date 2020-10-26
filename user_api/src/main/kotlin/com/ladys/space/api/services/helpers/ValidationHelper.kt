@@ -31,8 +31,5 @@ class ValidationHelper(
 
     fun isPasswordsEquals(password: String, toCompare: String): Boolean = (encoder.matches(password, toCompare))
 
-    fun getLoginFromToken(rawToken: String): String = rawToken.split(" ")[1].run {
-        jwtSecurity.getLogin(this)
-    }
 
 }

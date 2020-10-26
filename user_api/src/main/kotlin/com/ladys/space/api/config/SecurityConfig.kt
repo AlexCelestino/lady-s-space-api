@@ -7,8 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.HttpMethod.POST
-import org.springframework.http.HttpMethod.GET
+import org.springframework.http.HttpMethod.*
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.builders.WebSecurity
@@ -49,7 +48,9 @@ class SecurityConfig : WebSecurityConfigurerAdapter() {
                 .authorizeRequests()
                 .antMatchers(POST, "/user/**").permitAll()
                 .antMatchers(GET, "/validate/email").permitAll()
-                .anyRequest().authenticated()
+                .antMatchers(GET, "/validate/token").authenticated()
+                .antMatchers(PUT, "/user/update").authenticated()
+                .antMatchers(PATCH, "/user/change-password").authenticated()
 
         this.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 

@@ -33,34 +33,46 @@ class OccurrencesService {
 
     private val lastYear: Int = currentYear - 1
 
-    private val sortedByPoliceStation: Sort = Sort.by(Sort.Direction.ASC, "policeStation")
+    private val sortedByPoliceStation: Sort = Sort.by(Sort.Direction.ASC, "police_station")
 
     private val sortedByTotal: Sort = Sort.by(Sort.Direction.DESC, "records.total")
 
     fun getOccurrences(year: Int, region: String?, token: String?): List<OccurrencesDTO>? {
         token?.let {
             this.validationTokenHelper.validateToken(it)
-        }?: throw InvalidAccessException(this.errorMessageService.getMessage(MISSING_AUTHORIZATION_HEADER))
+        } ?: throw InvalidAccessException(this.errorMessageService.getMessage(MISSING_AUTHORIZATION_HEADER))
 
         if (region != null)
             return when (year) {
                 this.currentYear -> this.currentOccurrencesRepository.findByRegionOrderByPoliceStationAsc(
                         region, this.sortedByPoliceStation
-                )?.let { listOf(OccurrencesDTO(it.policeStation, it.region, it.records)) }
+                )?.let {
+                    val date: LocalDate? = if (it.updatedAt != null) LocalDate.parse(it.updatedAt) else null
+                    listOf(OccurrencesDTO(it.policeStation, it.region, it.records, date))
+                }
 
                 this.lastYear -> this.lastOccurrencesRepository.findByRegionOrderByPoliceStationAsc(
                         region, this.sortedByPoliceStation
-                )?.let { listOf(OccurrencesDTO(it.policeStation, it.region, it.records)) }
+                )?.let {
+                    val date: LocalDate? = if (it.updatedAt != null) LocalDate.parse(it.updatedAt) else null
+                    listOf(OccurrencesDTO(it.policeStation, it.region, it.records, date))
+                }
 
                 else -> null
             }
         else
             return when (year) {
                 this.currentYear -> this.currentOccurrencesRepository.findAll(this.sortedByPoliceStation).stream()
-                        .map { OccurrencesDTO(it.policeStation, it.region, it.records) }.collect(Collectors.toList())
+                        .map {
+                            val date: LocalDate? = if (it.updatedAt != null) LocalDate.parse(it.updatedAt) else null
+                            OccurrencesDTO(it.policeStation, it.region, it.records, date)
+                        }.collect(Collectors.toList())
 
                 this.lastYear -> this.lastOccurrencesRepository.findAll(this.sortedByPoliceStation).stream()
-                        .map { OccurrencesDTO(it.policeStation, it.region, it.records) }.collect(Collectors.toList())
+                        .map {
+                            val date: LocalDate? = if (it.updatedAt != null) LocalDate.parse(it.updatedAt) else null
+                            OccurrencesDTO(it.policeStation, it.region, it.records, date)
+                        }.collect(Collectors.toList())
 
                 else -> null
             }
@@ -69,7 +81,7 @@ class OccurrencesService {
     fun getTopFive(year: Int, token: String?): RankingDTO? {
         token?.let {
             this.validationTokenHelper.validateToken(it)
-        }?: throw InvalidAccessException(this.errorMessageService.getMessage(MISSING_AUTHORIZATION_HEADER))
+        } ?: throw InvalidAccessException(this.errorMessageService.getMessage(MISSING_AUTHORIZATION_HEADER))
 
         val rankingList: MutableList<RankingModel> = ArrayList(5)
 

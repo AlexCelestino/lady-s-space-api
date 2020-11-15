@@ -22,5 +22,8 @@ class ErrorMessageService {
         const val USER_UNAUTHORIZED: String = "user-unauthorized"
         const val MISSING_AUTHORIZATION_HEADER: String = "missing-authorization-header"
         const val CONNECTION_ERROR: String = "connection-error"
+        const val REGION_NOT_FOUND: String = "region-not-found"
+        const val CITY_NOT_FOUND: String = "city-not-found"
+        const val ZONE_NOT_FOUND: String = "zone-not-found"
     }
 }

@@ -1,26 +1,28 @@
 package com.ladys.space.occurrences.services
 
 import com.ladys.space.occurrences.errors.exceptions.InvalidAccessException
+import com.ladys.space.occurrences.errors.exceptions.ResourceNotFoundException
 import com.ladys.space.occurrences.models.RankingModel
 import com.ladys.space.occurrences.models.dto.OccurrencesDTO
 import com.ladys.space.occurrences.models.dto.RankingDTO
-import com.ladys.space.occurrences.repositories.CurrentYearOccurrencesRepository
-import com.ladys.space.occurrences.repositories.LastYearOccurrencesRepository
+import com.ladys.space.occurrences.repositories.OccurrencesRepository
+import com.ladys.space.occurrences.services.ErrorMessageService.Keys.CITY_NOT_FOUND
 import com.ladys.space.occurrences.services.ErrorMessageService.Keys.MISSING_AUTHORIZATION_HEADER
+import com.ladys.space.occurrences.services.ErrorMessageService.Keys.REGION_NOT_FOUND
+import com.ladys.space.occurrences.services.ErrorMessageService.Keys.ZONE_NOT_FOUND
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import org.springframework.data.domain.Sort.Direction.DESC
 import org.springframework.stereotype.Service
-import java.time.LocalDate
 import java.util.stream.Collectors
+
 
 @Service
 class OccurrencesService {
 
     @Autowired
-    private lateinit var currentOccurrencesRepository: CurrentYearOccurrencesRepository
-
-    @Autowired
-    private lateinit var lastOccurrencesRepository: LastYearOccurrencesRepository
+    private lateinit var repository: OccurrencesRepository
 
     @Autowired
     private lateinit var errorMessageService: ErrorMessageService
@@ -29,78 +31,76 @@ class OccurrencesService {
         ValidationTokenHelper(this.errorMessageService)
     }
 
-    private val currentYear: Int = LocalDate.now().year
+    private val sortedByTotal: Sort = Sort.by(DESC, "records.total")
 
-    private val lastYear: Int = currentYear - 1
+    private val sortedByUpdatedAt: Sort = Sort.by(DESC, "updatedAt")
 
-    private val sortedByPoliceStation: Sort = Sort.by(Sort.Direction.ASC, "police_station")
+    fun getAllOccurrences(neighbourhood: String?, city: String?, zone: String?, token: String?): List<OccurrencesDTO>? {
+        this.validateToken(token)
 
-    private val sortedByTotal: Sort = Sort.by(Sort.Direction.DESC, "records.total")
+        return when {
+            neighbourhood != null -> this.repository.findByNeighbourhoodOrderByUpdatedAtAsc(neighbourhood)?.let {
+                listOf(OccurrencesDTO(it.region, it.city, it.neighbourhood, it.zone, it.records, it.updatedAt))
+            } ?: throw ResourceNotFoundException(this.errorMessageService.getMessage(REGION_NOT_FOUND))
 
-    fun getOccurrences(year: Int, region: String?, token: String?): List<OccurrencesDTO>? {
-        token?.let {
-            this.validationTokenHelper.validateToken(it)
-        } ?: throw InvalidAccessException(this.errorMessageService.getMessage(MISSING_AUTHORIZATION_HEADER))
+            city != null -> this.repository.findByCityOrderByUpdatedAtAsc(city)?.let {
+                listOf(OccurrencesDTO(it.region, it.city, it.neighbourhood, it.zone, it.records, it.updatedAt))
+            } ?: throw ResourceNotFoundException(this.errorMessageService.getMessage(CITY_NOT_FOUND))
 
-        if (region != null)
-            return when (year) {
-                this.currentYear -> this.currentOccurrencesRepository.findByRegionOrderByPoliceStationAsc(
-                        region, this.sortedByPoliceStation
-                )?.let {
-                    val date: LocalDate? = if (it.updatedAt != null) LocalDate.parse(it.updatedAt) else null
-                    listOf(OccurrencesDTO(it.policeStation, it.region, it.records, date))
-                }
+            zone != null -> this.repository.findByZoneOrderByUpdatedAtAsc(zone)?.stream()?.map {
+                OccurrencesDTO(it.region, it.city, it.neighbourhood, it.zone, it.records, it.updatedAt)
+            }?.collect(Collectors.toList())
+                    ?: throw ResourceNotFoundException(this.errorMessageService.getMessage(ZONE_NOT_FOUND))
 
-                this.lastYear -> this.lastOccurrencesRepository.findByRegionOrderByPoliceStationAsc(
-                        region, this.sortedByPoliceStation
-                )?.let {
-                    val date: LocalDate? = if (it.updatedAt != null) LocalDate.parse(it.updatedAt) else null
-                    listOf(OccurrencesDTO(it.policeStation, it.region, it.records, date))
-                }
-
-                else -> null
+            else -> {
+                this.repository.findAll(this.sortedByUpdatedAt).stream().map {
+                    OccurrencesDTO(it.region, it.city, it.neighbourhood, it.zone, it.records, it.updatedAt)
+                }.collect(Collectors.toList())
             }
-        else
-            return when (year) {
-                this.currentYear -> this.currentOccurrencesRepository.findAll(this.sortedByPoliceStation).stream()
-                        .map {
-                            val date: LocalDate? = if (it.updatedAt != null) LocalDate.parse(it.updatedAt) else null
-                            OccurrencesDTO(it.policeStation, it.region, it.records, date)
-                        }.collect(Collectors.toList())
-
-                this.lastYear -> this.lastOccurrencesRepository.findAll(this.sortedByPoliceStation).stream()
-                        .map {
-                            val date: LocalDate? = if (it.updatedAt != null) LocalDate.parse(it.updatedAt) else null
-                            OccurrencesDTO(it.policeStation, it.region, it.records, date)
-                        }.collect(Collectors.toList())
-
-                else -> null
-            }
+        }
     }
 
-    fun getTopFive(year: Int, token: String?): RankingDTO? {
-        token?.let {
-            this.validationTokenHelper.validateToken(it)
-        } ?: throw InvalidAccessException(this.errorMessageService.getMessage(MISSING_AUTHORIZATION_HEADER))
+    fun getRanking(
+            token: String?,
+            capital: Boolean?,
+            metropolitanCity: Boolean?,
+            cities: Boolean?,
+            zone: String?
+    ): RankingDTO? {
+        this.validateToken(token)
 
-        val rankingList: MutableList<RankingModel> = ArrayList(5)
+        val rankingList: MutableList<RankingModel> = mutableListOf()
 
         val ranking: RankingDTO by lazy {
             RankingDTO(rankingList[0], rankingList[1], rankingList[2], rankingList[3], rankingList[4])
         }
 
-
-        return when (year) {
-            this.currentYear -> {
-                this.currentOccurrencesRepository.findAll(this.sortedByTotal).forEach {
-                    rankingList.add(RankingModel(it.region, it.records.total))
+        return when {
+            capital != null && capital -> {
+                this.repository.findByRegion(this.pagination(this.sortedByTotal)).content.forEach {
+                    rankingList.add(RankingModel(it.neighbourhood!!, it.records.total))
                 }
                 ranking
             }
 
-            this.lastYear -> {
-                this.lastOccurrencesRepository.findAll(this.sortedByTotal).forEach {
-                    rankingList.add(RankingModel(it.region, it.records.total))
+            metropolitanCity != null && metropolitanCity -> {
+                this.repository.findByMetropolitanCity(this.pagination(this.sortedByTotal)).content.forEach {
+                    rankingList.add(RankingModel(it.city, it.records.total))
+                }
+                ranking
+            }
+
+            cities != null && cities -> {
+                this.repository.findAll(this.sortedByTotal).forEach {
+                    if (it.region != "Capital" && it.region != "Grande São Paulo (exclui a Capital)")
+                        rankingList.add(RankingModel(it.city, it.records.total))
+                }
+                ranking
+            }
+
+            zone != null -> {
+                this.repository.findByZone(zone.toLowerCase(), this.pagination(this.sortedByTotal)).forEach {
+                    rankingList.add(RankingModel(it.neighbourhood!!, it.records.total))
                 }
                 ranking
             }
@@ -108,5 +108,17 @@ class OccurrencesService {
             else -> null
         }
     }
+
+    private fun pagination(sort: Sort): PageRequest = PageRequest.of(0, 5, sort)
+
+    private fun validateToken(token: String?): Unit = token?.let {
+        val adjustedToken: String
+        if (it.contains("Bearer")) {
+            adjustedToken = it.replace("Bearer ", "occurrencesToken ")
+            this.validationTokenHelper.validateToken(adjustedToken)
+        } else {
+            this.validationTokenHelper.validateToken(it)
+        }
+    } ?: throw InvalidAccessException(this.errorMessageService.getMessage(MISSING_AUTHORIZATION_HEADER))
 
 }

@@ -25,6 +25,7 @@ dependencies {
     implementation(group = "org.springframework.boot", name = "spring-boot-starter-data-mongodb", version = "2.3.4.RELEASE"
     )
     implementation(group = "org.hibernate", name = "hibernate-validator", version = "6.1.6.Final")
+    implementation(group = "org.springdoc", name = "springdoc-openapi-ui", version = "1.4.8")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")

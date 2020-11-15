@@ -5,8 +5,10 @@ import java.io.Serializable
 import java.time.LocalDate
 
 data class OccurrencesDTO(
-        val policeStation: String,
         val region: String,
+        val city: String,
+        val neighbourhood: String?,
+        val zone: String?,
         val records: RecordsModel,
         val updatedAt: LocalDate?
 ) : Serializable

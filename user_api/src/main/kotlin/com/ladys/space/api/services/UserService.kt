@@ -63,7 +63,15 @@ class UserService : UserDetailsService {
             throw BadCredentialsException(errorMessagesService.getMessage(INCORRECT_LOGIN))
         else
             with(user) {
-                AuthenticatedUserDTO(this.name, this.lastName, this.email, this.address!!.address, token, expireDate)
+                AuthenticatedUserDTO(
+                        this.name,
+                        this.lastName,
+                        this.email,
+                        this.birthDate,
+                        this.address!!.address,
+                        token,
+                        expireDate
+                )
             }
     }
 

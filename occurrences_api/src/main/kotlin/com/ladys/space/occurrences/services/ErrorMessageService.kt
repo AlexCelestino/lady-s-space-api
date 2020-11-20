@@ -11,7 +11,7 @@ class ErrorMessageService {
     @Autowired
     private lateinit var messageSource: MessageSource
 
-    fun getMessage(key: String): String {
+    fun message(key: String): String {
         LocaleContextHolder.getLocale().also {
             return this.messageSource.getMessage(key, null, it)
         }
@@ -25,5 +25,6 @@ class ErrorMessageService {
         const val REGION_NOT_FOUND: String = "region-not-found"
         const val CITY_NOT_FOUND: String = "city-not-found"
         const val ZONE_NOT_FOUND: String = "zone-not-found"
+        const val OCCURRENCE_NOT_FOUND: String = "occurrence-not-found"
     }
 }

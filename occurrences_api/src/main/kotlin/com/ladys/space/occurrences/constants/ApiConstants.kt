@@ -13,7 +13,7 @@ class ApiConstants private constructor() {
 
     object Api {
         const val KEY: String = "Occurrences token"
-        const val SERVER: String = "https://ladys-space-occurrences-api.herokuapp.com/api"
+        const val SERVER: String = "http://ladys-space-occurrences-api.herokuapp.com/api"
         const val TITLE: String = "Lady's Space Occurrences API"
         const val DESCRIPTION: String = "Occurrences API"
         const val VERSION: String = "1.0"
@@ -22,24 +22,14 @@ class ApiConstants private constructor() {
 
     object Parameters {
         object Ranking {
-            const val CAPITAL: String = "capital"
-            const val CAPITAL_DESCRIPTION: String = "Specifies that the ranking will be with the values registered in " +
-                    "the capital."
-
-            const val METROPOLITAN_CITY: String = "metropolitanCity"
-            const val METROPOLITAN_CITY_DESCRIPTION: String = "Specifies that the ranking will be with the values " +
-                    "registered in the metropolitan city."
-
-            const val CITIES: String = "cities"
-            const val CITIES_DESCRIPTION: String = "Specifies that the ranking will be with the values registered out" +
-                    " of São Paulo."
+            const val FILTER: String = "filter"
+            const val FILTER_DESCRIPTION: String = "Specify the region."
 
             const val ZONE: String = "zone"
-            const val ZONE_DESCRIPTION: String = "Specifies that the ranking will be with the values registered in " +
-                    "certain zones."
+            const val ZONE_DESCRIPTION: String = "Specify the zone."
         }
 
-        object AllOccurrences {
+        object Occurrences {
             const val NEIGHBOURHOOD: String = "neighbourhood"
             const val NEIGHBOURHOOD_DESCRIPTION: String = "Returns a list with the values of one specific " +
                     "neighbourhood."
@@ -49,6 +39,9 @@ class ApiConstants private constructor() {
 
             const val ZONE: String = "zone"
             const val ZONE_DESCRIPTION: String = "Returns a list of occurrences in a specific zone."
+
+            const val CRITERIA: String = "criteria"
+            const val CRITERIA_DESCRIPTION: String = "Specify the neighbourhood or city."
         }
 
     }
